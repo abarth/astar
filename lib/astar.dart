@@ -29,39 +29,35 @@ class Neighbor<T> {
   const Neighbor(this.node, this.cost);
 }
 
-class _NodeData<T> {
-  final T node;
-  bool isOpen = false;
-  bool isClosed = false;
-  double distanceEstimate = double.infinity;
-  double approximateDistanceToGoal = double.infinity;
-  _NodeData<T>? from;
-
-  _NodeData(this.node);
-}
-
 /// A* pathfinding algorithm.
 ///
 /// Override the [getApproximateDistanceToGoal] and [getNeighbors] methods to
 /// represent the graph.
 ///
 /// Call [findPath] to find a path from [start] to [goal].
+///
+/// The [T] type is the type of the nodes in the graph. It must be hashable.
 abstract class PathFinder<T> {
   /// Returns an estimate of the distance from [a] to [b].
   ///
-  /// This value is used to priortize search nodes that are closer to the goal.
+  /// This value is used to priortize searching nodes that are closer to the
+  /// goal.
+  ///
+  /// Clients are expected to override this function.
   double getApproximateDistance(T a, T b);
 
   /// Returns the neighbors of [node].
   ///
   /// Along with each neighbor, this function returns the cost of traversing the
   /// edge from [node] to that neighbor.
+  ///
+  /// Clients are expected to override this function.
   Iterable<Neighbor<T>> getNeighborsOf(T node);
 
   /// Find a path from [start] to [goal].
   ///
-  /// This function returns a list of nodes that represent the path from [start]
-  /// to [goal]. If no path is found, this function returns `null`.
+  /// This function returns an iterable of nodes that represent the path from
+  /// [start] to [goal]. If no path is found, this function returns `null`.
   Iterable<T>? findPath(T start, T goal) {
     final open = HeapPriorityQueue<_NodeData<T>>((a, b) =>
         a.approximateDistanceToGoal.compareTo(b.approximateDistanceToGoal));
@@ -112,21 +108,33 @@ abstract class PathFinder<T> {
 
         // As long as we have not closed this node, we can update the shortest
         // distance from start so far.
-        final distance = currentData.distanceEstimate + neighbor.cost;
-        if (distance < neighborData.distanceEstimate) {
+        final distance = currentData.distanceFromStartEstimate + neighbor.cost;
+        if (distance < neighborData.distanceFromStartEstimate) {
           neighborData.from = currentData;
-          neighborData.distanceEstimate = distance;
+          neighborData.distanceFromStartEstimate = distance;
         }
 
         // If this node is not open, add it to the open list so that we explore
         // paths that traverse this node.
         if (!neighborData.isOpen) {
           addToOpen(neighborData
-            ..approximateDistanceToGoal = neighborData.distanceEstimate +
-                getApproximateDistance(neighborData.node, goal));
+            ..approximateDistanceToGoal =
+                neighborData.distanceFromStartEstimate +
+                    getApproximateDistance(neighborData.node, goal));
         }
       }
     }
     return null;
   }
+}
+
+class _NodeData<T> {
+  final T node;
+  bool isOpen = false;
+  bool isClosed = false;
+  double distanceFromStartEstimate = double.infinity;
+  double approximateDistanceToGoal = double.infinity;
+  _NodeData<T>? from;
+
+  _NodeData(this.node);
 }
