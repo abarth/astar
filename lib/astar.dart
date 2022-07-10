@@ -65,7 +65,7 @@ abstract class PathFinder<T> {
     final data = HashMap<T, _NodeData<T>>();
 
     _NodeData<T> getNodeData(T node) {
-      return data.putIfAbsent(node, () => _NodeData(node, 0, 0, null));
+      return data.putIfAbsent(node, () => _NodeData(node));
     }
 
     void addToOpen(_NodeData<T> data) {
@@ -93,8 +93,9 @@ abstract class PathFinder<T> {
       // Transition this node to the closed state.
       assert(currentData.isOpen);
       assert(!currentData.isClosed);
-      currentData.isOpen = false;
+      currentData.distanceFromStartEstimate = 0;
       currentData.isClosed = true;
+      currentData.isOpen = false;
 
       for (final neighbor in getNeighborsOf(currentData.node)) {
         final neighborData = getNodeData(neighbor.node);
